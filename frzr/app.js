@@ -3,23 +3,23 @@ $(function() {
 	var Table = function(data) {
 		this.el = m("div", null,
 			m("table", { class: "table table-striped latest-data" },
-				this.tbody = m("tbody")
+				m("tbody",
+					this.rows = new frzr.List(Row)
+				)
 			)
 		);
-		this.rows = new frzr.List(Row)
-		frzr.mount(this.tbody, this.rows)
 		this.update()
 	}
 	Table.prototype.update = function() {
 		data = ENV.generateData().toArray()
-			
+
 		Monitoring.renderRate.ping()
-		
+
 		this.rows.update(data)
-		
+
 		setTimeout(() => this.update(), ENV.timeout)
 	}
-	
+
 	var Row = function() {
 		var cells = [
 			this.db = m("td", { class: "dbname" }),
@@ -37,8 +37,8 @@ $(function() {
 				);
 			})
 		)
-		
-		this.el = m.apply(frzr, ["tr"].concat(cells))
+		this.el = m('tr');
+		frzr.setChildren(this.el, cells);
 	}
 	Row.prototype.update = function(db) {
 		this.el.key = db.dbname
@@ -47,19 +47,18 @@ $(function() {
 		this.count.textContent = db.lastSample.nbQueries
 		this.topFive.forEach(function(el, i) {
 			var query = db.lastSample.topFiveQueries[i]
-			
+
 			var td = el
 			td.className = "Query " + query.elapsedClassName
-			
+
 			var span = td.firstChild
 			span.textContent = query.formatElapsed
-			
+
 			var popover = span.nextSibling.firstChild.textContent = query.query
 		})
 	}
-	
+
 	var data = ENV.generateData().toArray()
 	var table = new Table(data)
 	frzr.mount(document.getElementById("app"), table);
 });
-

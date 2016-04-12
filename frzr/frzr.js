@@ -8,7 +8,7 @@
     return document.createTextNode(str);
   }
 
-  function el (tagName, attrs) {
+  function el (tagName) {
     var element = document.createElement(tagName);
 
     for (var i = 1; i < arguments.length; i++) {
@@ -18,15 +18,15 @@
         continue;
       }
 
-      var isString = typeof arg === 'string';
+      var isPrimitive = typeof arg === 'string' || typeof arg === 'number' || typeof arg === 'boolean';
 
-      if ((i > 1) || isString || ((arg.el || arg) instanceof Node)) {
-        if (isString) {
+      if (isPrimitive || ((arg.el || arg) instanceof Node) || (arg instanceof List)) {
+        if (isPrimitive) {
           mount(element, text(arg));
         } else {
           mount(element, arg);
         }
-      } else if (i === 1) {
+      } else {
         for (var attr in arg) {
           if (element[attr] != null) {
             element[attr] = arg[attr];
@@ -50,15 +50,15 @@
         continue;
       }
 
-      var isString = typeof arg === 'string';
+      var isPrimitive = typeof arg === 'string' || typeof arg === 'number' || typeof arg === 'boolean';
 
-      if ((i > 1) || isString || ((arg.el || arg) instanceof Node)) {
-        if (isString) {
+      if (isPrimitive || ((arg.el || arg) instanceof Node) || (arg instanceof List)) {
+        if (isPrimitive) {
           mount(element, text(arg));
         } else {
           mount(element, arg);
         }
-      } else if (i === 1) {
+      } else {
         for (var attr in arg) {
           element.setAttribute(attr, arg[attr]);
         }
@@ -141,7 +141,7 @@
 
     for (var i = 0; i < removed.length; i++) {
       var view = removed[i];
-      
+
       if (view.remove) {
         this.parent && scheduleRemove(this.parent, view);
       } else {
