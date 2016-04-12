@@ -41,7 +41,6 @@ $(function() {
 		frzr.setChildren(this.el, cells);
 	}
 	Row.prototype.update = function(db) {
-		this.el.key = db.dbname
 		this.db.textContent = db.dbname
 		this.count.className = db.lastSample.countClassName
 		this.count.textContent = db.lastSample.nbQueries
