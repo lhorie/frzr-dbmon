@@ -52,14 +52,15 @@
     return element;
   }
 
-  function list (View, key, initData) {
-    return new List(View, key, initData);
+  function list (View, key, initData, skipRender) {
+    return new List(View, key, initData, skipRender);
   }
 
-  function List (View, key, initData) {
+  function List (View, key, initData, skipRender) {
     this.View = View;
     this.views = [];
     this.initData = initData;
+    this.skipRender = skipRender;
 
     if (key) {
       this.key = key;
@@ -73,6 +74,7 @@
     var parent = this.parent;
     var key = this.key;
     var initData = this.initData;
+    var skipRender = this.skipRender;
 
     if (cb) {
       var added = [];
@@ -92,7 +94,7 @@
         var view = lookup[id];
 
         if (!view) {
-          view = new View(initData, item);
+          view = new View(initData, item, i);
           cb && added.push(view);
         } else {
           cb && updated.push(view);
@@ -100,13 +102,13 @@
 
         views[i] = newLookup[id] = view;
 
-        view.update && view.update(item);
+        view.update && view.update(item, i);
       }
 
       for (var id in lookup) {
         if (!newLookup[id]) {
           cb && removed.push(lookup[id]);
-          parent && unmount(parent, lookup[id]);
+          !skipRender && parent && unmount(parent, lookup[id]);
         }
       }
 
@@ -115,7 +117,7 @@
       for (var i = data.length; i < views.length; i++) {
         var view = views[i];
 
-        unmount(parent, view);
+        !skipRender && parent && unmount(parent, view);
         cb && removed.push(view);
       }
 
@@ -126,34 +128,43 @@
         var view = views[i];
 
         if (!view) {
-          view = new View(initData, item);
+          view = new View(initData, item, i);
           cb && added.push(view);
         } else {
           cb && updated.push(view);
         }
 
-        view.update && view.update(item);
+        view.update && view.update(item, i);
         views[i] = view;
       }
     }
 
-    parent && setChildren(parent, views);
+    !skipRender && parent && setChildren(parent, views);
     cb && cb(added, updated, removed);
   }
 
-  function mount (parent, child) {
+  function mount (parent, child, before) {
     var parentEl = parent.el || parent;
     var childEl = child.el || child;
 
     if (childEl instanceof Node) {
-      parentEl.appendChild(childEl);
+      if (before) {
+        var beforeEl = before;
+        parentEl.insertBefore(childEl, beforeEl);
+      } else {
+        parentEl.appendChild(childEl);
+      }
+
+      if (child.el !== child) {
+        child.parent = parent;
+      }
 
     } else if (isPrimitive(childEl)) {
-      mount(parentEl, document.createTextNode(childEl));
+      mount(parentEl, document.createTextNode(childEl), before);
 
-    } else if (child instanceof Array) {
-      for (var i = 0; i < child.length; i++) {
-        mount(parentEl, child[i]);
+    } else if (childEl instanceof Array) {
+      for (var i = 0; i < childEl.length; i++) {
+        mount(parentEl, childEl[i], before);
       }
 
     } else if (child instanceof List) {
@@ -166,21 +177,17 @@
     return true;
   }
 
-  function mountBefore (parent, child, before) {
-    var parentEl = parent.el || parent;
-    var childEl = child.el || child;
-    var beforeEl = before.el || before;
-
-    parentEl.insertBefore(childEl, beforeEl);
-    child.parent = parent;
-  }
+  var mountBefore = mount;
 
   function unmount (parent, child) {
     var parentEl = parent.el || parent;
     var childEl = child.el || child;
 
     parentEl.removeChild(childEl);
-    child.parent = null;
+
+    if (childEl !== child) {
+      child.parent = null;
+    }
   }
 
   function isPrimitive (check) {
@@ -200,11 +207,7 @@
         continue;
       }
 
-      if (traverse) {
-        mountBefore(parent, child, traverse);
-      } else {
-        mount(parent, child);
-      }
+      mount(parent, child, traverse);
     }
 
     while (traverse) {
