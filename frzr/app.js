@@ -43,7 +43,7 @@ $(function () {
 			this.count.textContent = data[0];
 			this.count.className = data[1];
 		} else {
-			this.el.className = 'Query ' + data.elapsedClassName;
+			this.el.className = data.elapsedClassName;
 			this.span.textContent = data.formatElapsed;
 			this.popover.textContent = data.query;
 		}
@@ -70,6 +70,8 @@ $(function () {
 	mount(document.getElementById('app'), table);
 
 	function update () {
+		console.log(ENV.timeout);
+
 		var data = ENV.generateData().toArray();
 
 		Monitoring.renderRate.ping();
