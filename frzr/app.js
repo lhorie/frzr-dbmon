@@ -70,8 +70,6 @@ $(function () {
 	mount(document.getElementById('app'), table);
 
 	function update () {
-		console.log(ENV.timeout);
-
 		var data = ENV.generateData().toArray();
 
 		Monitoring.renderRate.ping();
